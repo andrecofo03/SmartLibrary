@@ -1,18 +1,17 @@
-package com.smartlibrary.observer;
+package com.smartlibrary.logic;
 
-import com.smartlibrary.logic.WaitingListManager;
 import com.smartlibrary.model.Studente;
-
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-class ObserverTest {
+// ponytail: rewritten from ObserverTest to test WaitingListManager using Studente directly
+class WaitingListManagerTest {
     @Test
     void testNotificaListaAttesa() {
-        Observer studenteMock = mock(Studente.class);
+        Studente studenteMock = mock(Studente.class);
         String isbn = "978111";
 
         WaitingListManager manager = WaitingListManager.getInstance();
@@ -25,8 +24,8 @@ class ObserverTest {
 
     @Test
     void testDetachNotificaMancante() {
-        Observer studente1 = mock(Studente.class);
-        Observer studente2 = mock(Studente.class);
+        Studente studente1 = mock(Studente.class);
+        Studente studente2 = mock(Studente.class);
         String isbn = "978222";
 
         WaitingListManager manager = WaitingListManager.getInstance();
@@ -44,8 +43,8 @@ class ObserverTest {
 
     @Test
     void testNotificheIsbnDiversi() {
-        Observer studenteA = mock(Studente.class);
-        Observer studenteB = mock(Studente.class);
+        Studente studenteA = mock(Studente.class);
+        Studente studenteB = mock(Studente.class);
 
         WaitingListManager manager = WaitingListManager.getInstance();
 
@@ -61,7 +60,7 @@ class ObserverTest {
     @Test
     void testHaStudentiAttesa() {
         WaitingListManager manager = WaitingListManager.getInstance();
-        Observer studente = mock(Studente.class);
+        Studente studente = mock(Studente.class);
 
         assertFalse(manager.hasWaiters("978333"));
 
@@ -70,6 +69,7 @@ class ObserverTest {
         assertEquals(1, manager.getWaitersCount("978333"));
 
         manager.itemReturned("978333", "Libro Test");
+        manager.detach("978333", studente);
         assertFalse(manager.hasWaiters("978333"));
     }
 }

@@ -1,44 +1,59 @@
 package com.smartlibrary.orm;
 
 import com.smartlibrary.db.DatabaseConnection;
-import com.smartlibrary.factory.ElementoFactory;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-
 import com.smartlibrary.model.ElementoBibliotecario;
+import com.smartlibrary.model.Libro;
+import com.smartlibrary.model.Ebook;
 
 public class LibraryItemDAO {
-
     public List<ElementoBibliotecario> findByCorsoEAnno(String corso, int anno) {
         List<ElementoBibliotecario> results = new ArrayList<>();
-        
         String sql = "SELECT l.*, cb.corso_studi, cb.anno_accademico " +
-                     "FROM library_items l " +
-                     "JOIN course_books cb ON l.isbn = cb.book_isbn " +
-                     "WHERE cb.corso_studi = ? AND cb.anno_accademico = ?";
-        
+                "FROM library_items l " +
+                "JOIN course_books cb ON l.isbn = cb.book_isbn " +
+                "WHERE cb.corso_studi = ? AND cb.anno_accademico = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, corso);
             stmt.setInt(2, anno);
-            
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 results.add(mapResultSetToItem(rs));
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return results;
     }
 
-    public void addItem(String isbn, String tipo, String titolo, String autore, String corsoStudi, int annoAccademico, Object param) {
+    public List<ElementoBibliotecario> findByCorso(String corso) {
+        List<ElementoBibliotecario> results = new ArrayList<>();
+        String sql = "SELECT l.*, cb.corso_studi, cb.anno_accademico " +
+                "FROM library_items l " +
+                "JOIN course_books cb ON l.isbn = cb.book_isbn " +
+                "WHERE cb.corso_studi = ?";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, corso);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                results.add(mapResultSetToItem(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return results;
+    }
+
+    public void addItem(String isbn, String tipo, String titolo, String autore, String corsoStudi, int annoAccademico,
+            Object param) {
         Connection conn = null;
         try {
             conn = DatabaseConnection.getInstance().getConnection();
-            conn.setAutoCommit(false); 
-
+            conn.setAutoCommit(false);
             if (!exists(conn, isbn)) {
                 String sqlLibro = "INSERT INTO library_items (isbn, tipo, titolo, autore, copie_totali, copie_disponibili, download_url) VALUES (?, ?, ?, ?, ?, ?, ?)";
                 try (PreparedStatement stmt = conn.prepareStatement(sqlLibro)) {
@@ -46,7 +61,6 @@ public class LibraryItemDAO {
                     stmt.setString(2, tipo);
                     stmt.setString(3, titolo);
                     stmt.setString(4, autore);
-                    
                     if ("CARTACEO".equals(tipo)) {
                         int copie = (Integer) param;
                         stmt.setInt(5, copie);
@@ -63,18 +77,27 @@ public class LibraryItemDAO {
             String sqlAssoc = "INSERT INTO course_books (book_isbn, corso_studi, anno_accademico) VALUES (?, ?, ?)";
             try (PreparedStatement stmt = conn.prepareStatement(sqlAssoc)) {
                 stmt.setString(1, isbn);
-                stmt.setString(2, corsoStudi);     
-                stmt.setInt(3, annoAccademico);   
+                stmt.setString(2, corsoStudi);
+                stmt.setInt(3, annoAccademico);
                 stmt.executeUpdate();
             }
-
-            conn.commit(); 
-
+            conn.commit();
         } catch (SQLException e) {
             e.printStackTrace();
-            if (conn != null) try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+            if (conn != null)
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
         } finally {
-            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+            if (conn != null)
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
         }
     }
 
@@ -86,59 +109,54 @@ public class LibraryItemDAO {
         }
     }
 
-
     public ElementoBibliotecario findByIsbn(String isbn) {
         String sql = "SELECT * FROM library_items WHERE isbn = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, isbn);
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()) return mapResultSetToItemBasic(rs);
-        } catch (SQLException e) { e.printStackTrace(); }
+            if (rs.next())
+                return mapResultSetToItemBasic(rs);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
     private ElementoBibliotecario mapResultSetToItem(ResultSet rs) throws SQLException {
         String tipo = rs.getString("tipo");
-        Object param = "CARTACEO".equals(tipo) ? rs.getInt("copie_disponibili") : rs.getString("download_url");
-        
-        return ElementoFactory.creaElemento(
-            tipo,
-            rs.getString("isbn"),
-            rs.getString("titolo"),
-            rs.getString("autore"),
-            rs.getString("corso_studi"),    
-            rs.getInt("anno_accademico"),   
-            param
-        );
+        String isbn = rs.getString("isbn");
+        String titolo = rs.getString("titolo");
+        String autore = rs.getString("autore");
+        String corsoStudi = rs.getString("corso_studi");
+        int annoAccademico = rs.getInt("anno_accademico");
+        if ("CARTACEO".equals(tipo)) {
+            return new Libro(isbn, titolo, autore, corsoStudi, annoAccademico, rs.getInt("copie_disponibili"));
+        } else {
+            return new Ebook(isbn, titolo, autore, corsoStudi, annoAccademico, rs.getString("download_url"));
+        }
     }
 
     private ElementoBibliotecario mapResultSetToItemBasic(ResultSet rs) throws SQLException {
         String tipo = rs.getString("tipo");
-        Object param = "CARTACEO".equals(tipo) ? rs.getInt("copie_disponibili") : rs.getString("download_url");
-        
-        return ElementoFactory.creaElemento(
-            tipo,
-            rs.getString("isbn"),
-            rs.getString("titolo"),
-            rs.getString("autore"),
-            "N/A",
-            0,     
-            param
-        );
+        String isbn = rs.getString("isbn");
+        String titolo = rs.getString("titolo");
+        String autore = rs.getString("autore");
+        if ("CARTACEO".equals(tipo)) {
+            return new Libro(isbn, titolo, autore, "N/A", 0, rs.getInt("copie_disponibili"));
+        } else {
+            return new Ebook(isbn, titolo, autore, "N/A", 0, rs.getString("download_url"));
+        }
     }
-    
-        public String updateQuantita(String isbn, int nuoveCopie) {
+
+    public String updateQuantita(String isbn, int nuoveCopie) {
         String sqlUpdate = "UPDATE library_items SET copie_totali = copie_totali + ?, copie_disponibili = copie_disponibili + ? WHERE isbn = ?";
         String sqlSelect = "SELECT titolo FROM library_items WHERE isbn = ?";
-        
         Connection conn = null;
         String titoloTrovato = null;
-
         try {
             conn = DatabaseConnection.getInstance().getConnection();
             conn.setAutoCommit(false);
-
             try (PreparedStatement stmt = conn.prepareStatement(sqlSelect)) {
                 stmt.setString(1, isbn);
                 ResultSet rs = stmt.executeQuery();
@@ -146,7 +164,6 @@ public class LibraryItemDAO {
                     titoloTrovato = rs.getString("titolo");
                 }
             }
-
             if (titoloTrovato != null) {
                 try (PreparedStatement stmt = conn.prepareStatement(sqlUpdate)) {
                     stmt.setInt(1, nuoveCopie);
@@ -155,48 +172,57 @@ public class LibraryItemDAO {
                     stmt.executeUpdate();
                 }
             }
-            
             conn.commit();
-
         } catch (SQLException e) {
             e.printStackTrace();
-            if (conn != null) try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+            if (conn != null)
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
             return null;
         } finally {
-            if (conn != null) try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+            if (conn != null)
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
         }
-        
         return titoloTrovato;
     }
-    
+
     public void decrementaCopie(String isbn) {
         String sql = "UPDATE library_items SET copie_disponibili = copie_disponibili - 1 WHERE isbn = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, isbn);
             stmt.executeUpdate();
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public void incrementaCopie(String isbn) {
         String sql = "UPDATE library_items SET copie_disponibili = copie_disponibili + 1 WHERE isbn = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, isbn);
             stmt.executeUpdate();
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public boolean deleteItem(String isbn) {
         String sql = "DELETE FROM library_items WHERE isbn = ?";
-        
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, isbn);
             int rowsAffected = stmt.executeUpdate();
             return rowsAffected > 0;
-            
         } catch (SQLException e) {
             System.err.println(">> Errore SQL durante l'eliminazione: " + e.getMessage());
             return false;

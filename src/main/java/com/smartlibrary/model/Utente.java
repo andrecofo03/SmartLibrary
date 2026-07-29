@@ -5,7 +5,8 @@ public abstract class Utente {
     protected String matricola;
     protected String nome;
     protected String email;
-    protected String ruolo; 
+    protected String ruolo;
+
     public Utente(int id, String matricola, String nome, String email, String ruolo) {
         this.id = id;
         this.matricola = matricola;
@@ -14,9 +15,23 @@ public abstract class Utente {
         this.ruolo = ruolo;
     }
 
-    public int getId() { return id; }
-    public String getMatricola() { return matricola; }
-    public String getNome() { return nome; }
-    public String getRuolo() { return ruolo; }
-    public String getEmail() { return email; }
+    public int getId() {
+        return id;
+    }
+
+    public String getMatricola() {
+        return matricola;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public String getRuolo() {
+        return ruolo;
+    }
+
+    public String getEmail() {
+        return email;
+    }
 }

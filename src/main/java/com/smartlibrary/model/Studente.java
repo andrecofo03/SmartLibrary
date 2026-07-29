@@ -9,7 +9,7 @@ public class Studente extends Utente implements Observer {
 
     @Override
     public void update(String isbn, String messaggio) {
-        System.out.println("\n[NOTIFICA] Matricola " + this.matricola 
-            + " - ISBN " + isbn + ": " + messaggio);
+        System.out.println("\n[NOTIFICA] Matricola " + this.matricola
+                + " - ISBN " + isbn + ": " + messaggio);
     }
 }

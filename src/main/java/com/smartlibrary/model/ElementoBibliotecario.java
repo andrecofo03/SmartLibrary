@@ -15,12 +15,27 @@ public abstract class ElementoBibliotecario {
         this.annoAccademico = annoAccademico;
     }
 
-    public String getIsbn() { return isbn; }
-    public String getTitolo() { return titolo; }
-    public String getAutore() { return autore; }
-    public String getCorsoStudi() { return corsoStudi; }
-    public int getAnnoAccademico() { return annoAccademico; }
+    public String getIsbn() {
+        return isbn;
+    }
+
+    public String getTitolo() {
+        return titolo;
+    }
+
+    public String getAutore() {
+        return autore;
+    }
+
+    public String getCorsoStudi() {
+        return corsoStudi;
+    }
+
+    public int getAnnoAccademico() {
+        return annoAccademico;
+    }
 
     public abstract boolean isAvailable();
+
     public abstract String getDettagli();
 }

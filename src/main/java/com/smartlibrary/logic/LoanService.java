@@ -1,39 +1,35 @@
 package com.smartlibrary.logic;
 
 import com.smartlibrary.model.ElementoBibliotecario;
-import java.util.List;
 import com.smartlibrary.model.Ebook;
 import com.smartlibrary.model.Libro;
 import com.smartlibrary.model.Prestito;
 import com.smartlibrary.model.Studente;
 import com.smartlibrary.orm.LibraryItemDAO;
 import com.smartlibrary.orm.LoanDAO;
+import java.util.List;
 
-public class StudentLoanController {
+public class LoanService {
     private final LibraryItemDAO itemDAO;
     private final LoanDAO loanDAO;
 
-    public StudentLoanController(LibraryItemDAO itemDAO, LoanDAO loanDAO) {
+    public LoanService(LibraryItemDAO itemDAO, LoanDAO loanDAO) {
         this.itemDAO = itemDAO;
         this.loanDAO = loanDAO;
-    }
-
-    public StudentLoanController() {
-        this(new LibraryItemDAO(), new LoanDAO());
-    }
-
-    public List<ElementoBibliotecario> cercaPerCorso(String corso, int anno) {
-        return itemDAO.findByCorsoEAnno(corso, anno);
     }
 
     public String richiediPrestito(Studente studente, String isbn) {
         ElementoBibliotecario item = itemDAO.findByIsbn(isbn);
         if (item == null)
-            return "Libro non trovato.";
+            return "Errore: Nessun elemento trovato con ISBN '" + isbn + "'.";
+        if (loanDAO.hasActiveLoan(studente.getId(), isbn)) {
+            return "Errore: Hai già un prestito attivo per '" + item.getTitolo() + "'.";
+        }
         if (item instanceof Libro) {
             if (item.isAvailable()) {
                 itemDAO.decrementaCopie(isbn);
                 loanDAO.createLoan(studente.getId(), isbn);
+                WaitingListManager.getInstance().detach(isbn, studente);
                 return "PRESTITO CARTACEO CONFERMATO (Scadenza: 30gg)";
             } else {
                 WaitingListManager.getInstance().attach(isbn, studente);
@@ -43,7 +39,7 @@ public class StudentLoanController {
             loanDAO.createLoan(studente.getId(), isbn);
             return "EBOOK SCARICABILE (Scadenza accesso: 30gg). URL: " + ((Ebook) item).getUrl();
         }
-        return "Errore generico.";
+        return "Errore: Tipo elemento non gestito '" + item.getClass().getSimpleName() + "'.";
     }
 
     public void restituisciLibro(String isbn, int userId) {

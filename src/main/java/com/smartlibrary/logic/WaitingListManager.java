@@ -4,7 +4,6 @@ import com.smartlibrary.observer.Observer;
 import com.smartlibrary.observer.Subject;
 import java.util.*;
 
-
 public class WaitingListManager implements Subject {
     private static volatile WaitingListManager instance;
     private final Map<String, List<Observer>> waitingLists;
@@ -26,7 +25,10 @@ public class WaitingListManager implements Subject {
 
     @Override
     public void attach(String isbn, Observer o) {
-        waitingLists.computeIfAbsent(isbn, k -> new ArrayList<>()).add(o);
+        List<Observer> lista = waitingLists.computeIfAbsent(isbn, k -> new ArrayList<>());
+        if (!lista.contains(o)) {
+            lista.add(o);
+        }
     }
 
     @Override
@@ -44,17 +46,14 @@ public class WaitingListManager implements Subject {
     public void notifyObservers(String isbn, String messaggio) {
         List<Observer> lista = waitingLists.get(isbn);
         if (lista != null && !lista.isEmpty()) {
-            for (Observer o : new ArrayList<>(lista)) {
-                o.update(isbn, messaggio);
-            }
+            Observer primoInLista = lista.get(0);
+            primoInLista.update(isbn, messaggio);
         }
     }
 
     public void itemReturned(String isbn, String titoloLibro) {
-        String messaggio = "Il libro '" + titoloLibro + "' è ora disponibile!";
+        String messaggio = "Il libro '" + titoloLibro + "' è ora disponibile! Sei il primo in lista.";
         notifyObservers(isbn, messaggio);
-
-        waitingLists.remove(isbn);
     }
 
     public boolean hasWaiters(String isbn) {

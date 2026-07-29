@@ -6,10 +6,9 @@ import java.sql.SQLException;
 
 public class DatabaseConnection {
     private static volatile DatabaseConnection instance;
-
     private static final String URL = "jdbc:postgresql://localhost:5432/library_db";
     private static final String USER = "postgres";
-    private static final String PASSWORD = "admin"; 
+    private static final String PASSWORD = "admin";
 
     private DatabaseConnection() {
         try {
@@ -18,7 +17,7 @@ public class DatabaseConnection {
             throw new RuntimeException("Driver PostgreSQL non trovato.", e);
         }
     }
-    
+
     public static DatabaseConnection getInstance() {
         if (instance == null) {
             synchronized (DatabaseConnection.class) {

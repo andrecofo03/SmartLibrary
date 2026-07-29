@@ -8,7 +8,17 @@ public class Ebook extends ElementoBibliotecario {
         this.downloadUrl = url;
     }
 
-        @Override public boolean isAvailable() { return true; }
-        @Override public String getDettagli() { return "[EBOOK] " + titolo; }
-        public String getUrl() { return downloadUrl; }
+    @Override
+    public boolean isAvailable() {
+        return true;
     }
+
+    @Override
+    public String getDettagli() {
+        return "[EBOOK] " + titolo;
+    }
+
+    public String getUrl() {
+        return downloadUrl;
+    }
+}

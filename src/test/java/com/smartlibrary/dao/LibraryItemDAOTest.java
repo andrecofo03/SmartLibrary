@@ -93,4 +93,21 @@ class LibraryItemDAOTest {
             verify(mockStmt).setInt(2, 2);
         }
     }
+
+    @Test
+    void testFindByCorso_QueryCorretta() throws SQLException {
+        try (MockedStatic<DatabaseConnection> dbMock = Mockito.mockStatic(DatabaseConnection.class)) {
+            DatabaseConnection instanceMock = mock(DatabaseConnection.class);
+            dbMock.when(DatabaseConnection::getInstance).thenReturn(instanceMock);
+            when(instanceMock.getConnection()).thenReturn(mockConn);
+            when(mockConn.prepareStatement(anyString())).thenReturn(mockStmt);
+            when(mockStmt.executeQuery()).thenReturn(mockRs);
+            when(mockRs.next()).thenReturn(false);
+
+            dao.findByCorso("Informatica");
+
+            verify(mockConn).prepareStatement(contains("JOIN course_books"));
+            verify(mockStmt).setString(1, "Informatica");
+        }
+    }
 }

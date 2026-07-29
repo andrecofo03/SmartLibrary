@@ -38,4 +38,19 @@ class PrestitoTest {
         Prestito p2 = new Prestito(1, "T", "1", null, null, null, 2);
         assertFalse(p2.isRenewable());
     }
+
+    @Test
+    void testDateFormatting() {
+        Date inizio = Date.valueOf("2026-07-13");
+        Date scadenza = Date.valueOf("2026-08-12");
+
+        Prestito p = new Prestito(1, "Libro", "123", inizio, scadenza, null, 0);
+
+        assertEquals("13/07/2026", p.getDataInizioFormatted());
+        assertEquals("12/08/2026", p.getDataScadenzaFormatted());
+
+        Prestito pNull = new Prestito(2, "Libro Null", "456", null, null, null, 0);
+        assertEquals("N/A", pNull.getDataInizioFormatted());
+        assertEquals("N/A", pNull.getDataScadenzaFormatted());
+    }
 }

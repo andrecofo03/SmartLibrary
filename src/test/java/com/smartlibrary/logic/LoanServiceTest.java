@@ -8,32 +8,35 @@ import com.smartlibrary.orm.LoanDAO;
 import com.smartlibrary.model.Ebook;
 import com.smartlibrary.model.Studente;
 
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-class StudentLoanControllerTest {
+// ponytail: renamed from StudentLoanControllerTest to LoanServiceTest
+class LoanServiceTest {
 
-    @Mock private LibraryItemDAO itemDAO;
-    @Mock private LoanDAO loanDAO;
-    @InjectMocks private StudentLoanController controller;
+    @Mock
+    private LibraryItemDAO itemDAO;
+    @Mock
+    private LoanDAO loanDAO;
+    private LoanService controller;
     private Studente studente;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
         studente = new Studente(1, "1234567", "Mario", "mario@test.com");
+        controller = new LoanService(itemDAO, loanDAO);
     }
 
     @Test
     void testRichiestaPrestitoCartaceo() {
         Libro libro = new Libro("978-1", "Java", "Auth", "Ing", 1, 5);
         when(itemDAO.findByIsbn("978-1")).thenReturn(libro);
+        when(loanDAO.hasActiveLoan(studente.getId(), "978-1")).thenReturn(false);
 
         String result = controller.richiediPrestito(studente, "978-1");
 
@@ -46,6 +49,7 @@ class StudentLoanControllerTest {
     void testRichiestaPrestitoCartaceoEsaurito() {
         Libro libro = new Libro("978-0", "Empty", "Auth", "Ing", 1, 0);
         when(itemDAO.findByIsbn("978-0")).thenReturn(libro);
+        when(loanDAO.hasActiveLoan(studente.getId(), "978-0")).thenReturn(false);
 
         String result = controller.richiediPrestito(studente, "978-0");
 
@@ -58,6 +62,7 @@ class StudentLoanControllerTest {
     void testRichiestaPrestito_Ebook() {
         Ebook ebook = new Ebook("978-E", "Digital", "Auth", "Ing", 1, "http://url");
         when(itemDAO.findByIsbn("978-E")).thenReturn(ebook);
+        when(loanDAO.hasActiveLoan(studente.getId(), "978-E")).thenReturn(false);
 
         String result = controller.richiediPrestito(studente, "978-E");
 
@@ -72,7 +77,7 @@ class StudentLoanControllerTest {
 
         String result = controller.richiediPrestito(studente, "INESISTENTE");
 
-        assertEquals("Libro non trovato.", result);
+        assertEquals("Errore: Nessun elemento trovato con ISBN 'INESISTENTE'.", result);
         verify(loanDAO, never()).createLoan(anyInt(), anyString());
     }
 

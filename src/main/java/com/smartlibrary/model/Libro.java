@@ -1,6 +1,5 @@
 package com.smartlibrary.model;
 
-
 public class Libro extends ElementoBibliotecario {
     private int copieDisponibili;
 
@@ -9,8 +8,17 @@ public class Libro extends ElementoBibliotecario {
         this.copieDisponibili = copieDisponibili;
     }
 
-    @Override public boolean isAvailable() { return copieDisponibili > 0; }
-    @Override public String getDettagli() { return "[CARTACEO] " + titolo + " (Disp: " + copieDisponibili + ")"; }
-    public int getCopieDisponibili() { return copieDisponibili; }
+    @Override
+    public boolean isAvailable() {
+        return copieDisponibili > 0;
+    }
 
+    @Override
+    public String getDettagli() {
+        return "[CARTACEO] " + titolo + " (Disp: " + copieDisponibili + ")";
+    }
+
+    public int getCopieDisponibili() {
+        return copieDisponibili;
+    }
 }
